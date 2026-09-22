@@ -1,5 +1,5 @@
 import { LEVELS } from '../data/levels'
-import { StarRating } from '../components/StarRating'
+import { getLevelStars } from '../utils/stars'
 import type { Progress } from '../types'
 
 export function LevelSelect({
@@ -18,12 +18,12 @@ export function LevelSelect({
       <button onClick={onBack} className="text-orange-700 font-semibold mb-4">
         ← Retour
       </button>
-      <h2 className="text-3xl font-extrabold text-orange-800 text-center mb-6">Choisis un niveau</h2>
+      <h2 className="text-3xl font-extrabold text-orange-800 text-center mb-6">Choisis un chapitre</h2>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {LEVELS.map((level) => {
           const unlocked = isLevelUnlocked(level.id)
-          const stars = progress.levelStars[level.id] ?? 0
+          const { earned, max } = getLevelStars(progress, level)
 
           return (
             <button
@@ -41,7 +41,9 @@ export function LevelSelect({
                 <div className="font-bold text-orange-900 text-lg">{level.name}</div>
                 <div className="text-sm text-orange-600">{level.subtitle}</div>
               </div>
-              <StarRating stars={stars} size="text-lg" />
+              <div className="text-amber-500 font-semibold text-sm whitespace-nowrap">
+                ★ {earned}/{max}
+              </div>
             </button>
           )
         })}

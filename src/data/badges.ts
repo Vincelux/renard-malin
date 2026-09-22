@@ -1,16 +1,22 @@
 import type { Badge } from '../types'
+import { LEVELS } from './levels'
+
+const CHAPTER_BADGES: Badge[] = LEVELS.filter((l) => l.id <= 12).map((l) => ({
+  id: `chapter-${l.id}`,
+  name: l.name,
+  description: `Termine tous les défis de "${l.name}" (${l.subtitle})`,
+  emoji: l.emoji,
+}))
 
 export const BADGES: Badge[] = [
-  { id: 'level-1', name: 'Bébé Renard', description: 'Termine "Le Renardeau"', emoji: '🦊' },
-  { id: 'level-2', name: 'Renard Curieux', description: 'Termine "Le Renard Curieux"', emoji: '🐾' },
-  { id: 'level-3', name: 'Renard Astucieux', description: 'Termine "Le Renard Astucieux"', emoji: '🍁' },
-  { id: 'level-4', name: 'Renard Rusé', description: 'Termine "Le Renard Rusé"', emoji: '🌰' },
-  { id: 'level-5', name: 'Grand Maître Renard', description: 'Termine "Le Grand Maître Renard"', emoji: '👑' },
-  { id: 'perfect', name: 'Étoile Filante', description: 'Trouve toutes les réponses du premier coup, sans aucune aide', emoji: '🌟' },
-  { id: 'speedy', name: "Rapide comme l'éclair", description: 'Termine un niveau vite avec un très bon score', emoji: '⚡' },
+  ...CHAPTER_BADGES,
+  { id: 'perfect', name: 'Étoile Filante', description: 'Termine un défi avec un score parfait, sans aucune aide', emoji: '🌟' },
+  { id: 'speedy', name: "Rapide comme l'éclair", description: 'Obtiens 3 étoiles à un défi Chrono', emoji: '⚡' },
+  { id: 'chrono-master', name: 'Maître du Chrono', description: 'Obtiens 3 étoiles à tous les défis Chrono', emoji: '🏅' },
+  { id: 'boss', name: 'Vainqueur du Défi Suprême', description: 'Termine "Le Défi Suprême" avec 3 étoiles partout', emoji: '🏆' },
   { id: 'streak-3', name: 'Petit Explorateur', description: 'Joue 3 jours de suite', emoji: '🔥' },
-  { id: 'streak-7', name: 'Grand Explorateur', description: 'Joue 7 jours de suite', emoji: '🏆' },
-  { id: 'all-stars', name: 'Reine des Renards', description: 'Obtiens 3 étoiles à tous les niveaux', emoji: '✨' },
+  { id: 'streak-7', name: 'Grand Explorateur', description: 'Joue 7 jours de suite', emoji: '🎖️' },
+  { id: 'all-stars', name: 'Reine des Renards', description: 'Obtiens 3 étoiles à absolument tous les défis', emoji: '✨' },
 ]
 
 export function getBadge(id: string): Badge | undefined {

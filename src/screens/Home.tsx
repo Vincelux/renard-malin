@@ -1,6 +1,6 @@
 import { FoxMascot } from '../components/FoxMascot'
 import type { Profile, Progress } from '../types'
-import { LEVELS } from '../data/levels'
+import { getTotalStars } from '../utils/stars'
 
 export function Home({
   profile,
@@ -15,8 +15,7 @@ export function Home({
   onRewards: () => void
   onSwitchProfile: () => void
 }) {
-  const totalStars = Object.values(progress.levelStars).reduce((sum: number, s) => sum + s, 0)
-  const maxStars = LEVELS.length * 3
+  const { earned: totalStars, max: maxStars } = getTotalStars(progress)
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[80vh] text-center px-6 gap-6">

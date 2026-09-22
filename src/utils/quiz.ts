@@ -1,24 +1,22 @@
-import type { Question } from '../types'
+import type { ChallengeType, Question } from '../types'
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-export function generateQuestions(tables: number[], count: number): Question[] {
-  const questions: Question[] = []
-  const seen = new Set<string>()
-
-  while (questions.length < count) {
-    const a = tables[randInt(0, tables.length - 1)]
-    const b = randInt(1, 10)
-    const key = `${a}x${b}`
-    if (seen.has(key) && seen.size < tables.length * 10) continue
-    seen.add(key)
-
-    questions.push({ a, b, answer: a * b })
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = randInt(0, i)
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
   }
+  return copy
+}
 
-  return questions
+function randomPair(tables: number[]): { a: number; b: number } {
+  const a = tables[randInt(0, tables.length - 1)]
+  const b = randInt(1, 10)
+  return { a, b }
 }
 
 const SPECIAL_TRICKS: Record<number, (other: number) => string> = {
@@ -31,7 +29,7 @@ const SPECIAL_TRICKS: Record<number, (other: number) => string> = {
   11: (other) => (other <= 9 ? `Pour multiplier 11 par un chiffre de 1 à 9, répète-le deux fois : ${other}${other}.` : `Pense à 11 comme 10 + 1 : additionne le nombre × 10 et le nombre lui-même.`),
 }
 
-export function generateHint(a: number, b: number): string {
+function generateHint(a: number, b: number): string {
   const candidates = [a, b].filter((n) => n in SPECIAL_TRICKS)
   if (candidates.length > 0) {
     const n = Math.min(...candidates)
@@ -40,4 +38,65 @@ export function generateHint(a: number, b: number): string {
   }
 
   return `Astuce : décompose le calcul. ${a} × ${b} = (${a} × ${b - 1}) + ${a}. Calcule d'abord ${a} × ${b - 1}, puis ajoute ${a}.`
+}
+
+function generateFactorHint(known: number, product: number): string {
+  return `Astuce : ${product} ÷ ${known} = ?. Cherche combien de fois ${known} tient dans ${product}.`
+}
+
+export function generateQuizQuestions(tables: number[], count: number): Question[] {
+  const questions: Question[] = []
+  const seen = new Set<string>()
+
+  while (questions.length < count) {
+    const { a, b } = randomPair(tables)
+    const key = `${a}x${b}`
+    if (seen.has(key) && seen.size < tables.length * 10) continue
+    seen.add(key)
+
+    questions.push({ prompt: `${a} × ${b}`, answer: a * b, hint: generateHint(a, b) })
+  }
+
+  return questions
+}
+
+export function generateMissingFactorQuestions(tables: number[], count: number): Question[] {
+  const questions: Question[] = []
+  const seen = new Set<string>()
+
+  while (questions.length < count) {
+    const { a, b } = randomPair(tables)
+    const key = `${a}x${b}`
+    if (seen.has(key) && seen.size < tables.length * 10) continue
+    seen.add(key)
+
+    const product = a * b
+    const hideFirst = Math.random() < 0.5
+    const prompt = hideFirst ? `? × ${b} = ${product}` : `${a} × ? = ${product}`
+    const answer = hideFirst ? a : b
+    const known = hideFirst ? b : a
+
+    questions.push({ prompt, answer, hint: generateFactorHint(known, product) })
+  }
+
+  return questions
+}
+
+export function generateMixedQuestions(tables: number[], count: number): Question[] {
+  const half = Math.ceil(count / 2)
+  const pool = [...generateQuizQuestions(tables, half), ...generateMissingFactorQuestions(tables, count - half)]
+  return shuffle(pool).slice(0, count)
+}
+
+export function generateQuestionsForChallenge(type: ChallengeType, tables: number[], count: number): Question[] {
+  switch (type) {
+    case 'quiz':
+      return generateQuizQuestions(tables, count)
+    case 'missing-factor':
+      return generateMissingFactorQuestions(tables, count)
+    case 'mixed':
+      return generateMixedQuestions(tables, count)
+    case 'chrono':
+      return generateQuizQuestions(tables, count)
+  }
 }

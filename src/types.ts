@@ -1,9 +1,13 @@
+export type ChallengeType = 'quiz' | 'missing-factor' | 'mixed' | 'chrono'
+
 export interface Level {
   id: number
   name: string
   subtitle: string
   tables: number[]
   emoji: string
+  challenges: ChallengeType[]
+  questionCount: number
 }
 
 export interface Badge {
@@ -14,15 +18,16 @@ export interface Badge {
 }
 
 export interface Question {
-  a: number
-  b: number
+  prompt: string
   answer: number
+  hint: string
 }
 
 export type Stars = 0 | 1 | 2 | 3
 
-export interface LevelResult {
+export interface ChallengeResult {
   levelId: number
+  type: ChallengeType
   correct: number
   total: number
   score: number
@@ -36,7 +41,7 @@ export interface LevelResult {
 }
 
 export interface Progress {
-  levelStars: Record<number, Stars>
+  challengeStars: Record<string, Stars>
   unlockedBadges: string[]
   lastPlayedDate: string | null
   streak: number
@@ -50,4 +55,4 @@ export interface Profile {
   emoji: string
 }
 
-export type Screen = 'profiles' | 'home' | 'levels' | 'quiz' | 'results' | 'rewards'
+export type Screen = 'profiles' | 'home' | 'levels' | 'challenges' | 'quiz' | 'chrono' | 'results' | 'rewards'

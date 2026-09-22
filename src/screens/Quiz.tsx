@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { FoxMascot } from '../components/FoxMascot'
-import { getLevel, QUESTIONS_PER_LEVEL } from '../data/levels'
-import { generateHint, generateQuestions } from '../utils/quiz'
+import { challengeLabel, getLevel } from '../data/levels'
+import { generateQuestionsForChallenge } from '../utils/quiz'
+import type { ChallengeType } from '../types'
 
 const ATTEMPTS_BEFORE_HELP = 3
 
@@ -16,15 +17,20 @@ function pointsFor(attempts: number, hintUsed: boolean, revealed: boolean): numb
 
 export function Quiz({
   levelId,
+  challengeType,
   onFinish,
   onBack,
 }: {
   levelId: number
+  challengeType: ChallengeType
   onFinish: (correct: number, total: number, durationSec: number, score: number, hintsUsed: number, revealsUsed: number) => void
   onBack: () => void
 }) {
   const level = getLevel(levelId)!
-  const questions = useMemo(() => generateQuestions(level.tables, QUESTIONS_PER_LEVEL), [levelId])
+  const questions = useMemo(
+    () => generateQuestionsForChallenge(challengeType, level.tables, level.questionCount),
+    [levelId, challengeType],
+  )
 
   const [index, setIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
@@ -108,7 +114,7 @@ export function Quiz({
           ← Quitter
         </button>
         <div className="text-orange-700 font-semibold">
-          Question {index + 1} / {questions.length}
+          {challengeLabel(challengeType)} · {index + 1} / {questions.length}
         </div>
       </div>
 
@@ -121,9 +127,7 @@ export function Quiz({
 
       <div className="flex flex-col items-center gap-4 mb-6">
         <FoxMascot mood={mood} size="text-6xl" />
-        <div className="text-5xl font-extrabold text-orange-900">
-          {question.a} × {question.b}
-        </div>
+        <div className="text-5xl font-extrabold text-orange-900">{question.prompt}</div>
       </div>
 
       <form onSubmit={handleSubmit} className={`flex flex-col items-center gap-4 ${shake ? 'animate-pulse' : ''}`}>
@@ -163,7 +167,7 @@ export function Quiz({
 
       {hintUsed && status === 'active' && (
         <div className="mt-6 w-full bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 text-center">
-          <p className="text-amber-800 text-sm font-semibold">{generateHint(question.a, question.b)}</p>
+          <p className="text-amber-800 text-sm font-semibold">{question.hint}</p>
         </div>
       )}
 

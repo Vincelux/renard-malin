@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { LevelResult, Progress, Stars } from '../types'
-import { LEVELS } from '../data/levels'
+import type { ChallengeResult, ChallengeType, Progress, Stars } from '../types'
+import { LEVELS, getLevel } from '../data/levels'
+import { challengeKey } from '../utils/progressKeys'
 
 const STORAGE_PREFIX = 'renard-malin-progress-v1'
 
 function defaultProgress(): Progress {
   return {
-    levelStars: {},
+    challengeStars: {},
     unlockedBadges: [],
     lastPlayedDate: null,
     streak: 0,
@@ -37,6 +38,13 @@ function computeStars(score: number, maxScore: number): Stars {
   if (ratio >= 0.9) return 3
   if (ratio >= 0.7) return 2
   if (ratio >= 0.5) return 1
+  return 0
+}
+
+function computeChronoStars(correct: number): Stars {
+  if (correct >= 15) return 3
+  if (correct >= 10) return 2
+  if (correct >= 6) return 1
   return 0
 }
 
@@ -80,45 +88,82 @@ export function useProgress(profileId: string | null) {
   const isLevelUnlocked = useCallback(
     (levelId: number) => {
       if (levelId <= 1) return true
-      const prevStars = progress.levelStars[levelId - 1]
-      return typeof prevStars === 'number' && prevStars >= 1
+      const prevLevel = getLevel(levelId - 1)
+      if (!prevLevel) return false
+      return prevLevel.challenges.every(
+        (type) => (progress.challengeStars[challengeKey(prevLevel.id, type)] ?? 0) >= 1,
+      )
     },
-    [progress.levelStars],
+    [progress.challengeStars],
   )
 
-  const recordLevelResult = useCallback(
+  const isChallengeUnlocked = useCallback(
+    (levelId: number, type: ChallengeType) => {
+      if (!isLevelUnlocked(levelId)) return false
+      const level = getLevel(levelId)
+      if (!level) return false
+      const idx = level.challenges.indexOf(type)
+      if (idx <= 0) return true
+      const prevType = level.challenges[idx - 1]
+      return (progress.challengeStars[challengeKey(levelId, prevType)] ?? 0) >= 1
+    },
+    [isLevelUnlocked, progress.challengeStars],
+  )
+
+  const recordChallengeResult = useCallback(
     (
       levelId: number,
+      type: ChallengeType,
       correct: number,
       total: number,
       durationSec: number,
       score: number,
       hintsUsed: number,
       revealsUsed: number,
-    ): LevelResult => {
+    ): ChallengeResult => {
       const prev = progress
       const maxScore = total * 3
-      const stars = computeStars(score, maxScore)
+      const stars = type === 'chrono' ? computeChronoStars(correct) : computeStars(score, maxScore)
       const newBadgeIds: string[] = []
+      const key = challengeKey(levelId, type)
 
-      const prevStars = prev.levelStars[levelId] ?? 0
+      const prevStars = prev.challengeStars[key] ?? 0
       const isNewBest = stars > prevStars
-      const levelStars = { ...prev.levelStars, [levelId]: Math.max(prevStars, stars) as Stars }
+      const challengeStars = { ...prev.challengeStars, [key]: Math.max(prevStars, stars) as Stars }
 
-      if (stars >= 1) {
-        const badgeId = `level-${levelId}`
-        if (!prev.unlockedBadges.includes(badgeId)) newBadgeIds.push(badgeId)
+      const level = getLevel(levelId)
+      const chapterComplete = level
+        ? level.challenges.every((t) => (challengeStars[challengeKey(levelId, t)] ?? 0) >= 1)
+        : false
+      if (chapterComplete && levelId <= 12 && !prev.unlockedBadges.includes(`chapter-${levelId}`)) {
+        newBadgeIds.push(`chapter-${levelId}`)
       }
-      if (score === maxScore && total > 0 && !prev.unlockedBadges.includes('perfect')) {
+
+      if (type !== 'chrono' && score === maxScore && total > 0 && !prev.unlockedBadges.includes('perfect')) {
         newBadgeIds.push('perfect')
       }
-      if (stars === 3 && durationSec > 0 && durationSec / total <= 6 && !prev.unlockedBadges.includes('speedy')) {
-        newBadgeIds.push('speedy')
+
+      if (type === 'chrono' && stars === 3) {
+        if (!prev.unlockedBadges.includes('speedy')) newBadgeIds.push('speedy')
+
+        const chronoLevels = LEVELS.filter((l) => l.challenges.includes('chrono'))
+        const allChronoMastered = chronoLevels.every((l) => (challengeStars[challengeKey(l.id, 'chrono')] ?? 0) === 3)
+        if (allChronoMastered && !prev.unlockedBadges.includes('chrono-master')) {
+          newBadgeIds.push('chrono-master')
+        }
       }
+
+      const level15 = getLevel(15)
       if (
-        LEVELS.every((l) => (levelStars[l.id] ?? 0) === 3) &&
-        !prev.unlockedBadges.includes('all-stars')
+        level15 &&
+        level15.challenges.every((t) => (challengeStars[challengeKey(15, t)] ?? 0) === 3) &&
+        !prev.unlockedBadges.includes('boss')
       ) {
+        newBadgeIds.push('boss')
+      }
+
+      const allMastered = LEVELS.every((l) => l.challenges.every((t) => (challengeStars[challengeKey(l.id, t)] ?? 0) === 3))
+      if (allMastered && !prev.unlockedBadges.includes('all-stars')) {
         newBadgeIds.push('all-stars')
       }
 
@@ -129,7 +174,7 @@ export function useProgress(profileId: string | null) {
 
       setProgress({
         ...prev,
-        levelStars,
+        challengeStars,
         unlockedBadges: [...prev.unlockedBadges, ...newBadgeIds],
         lastPlayedDate: todayKey(),
         streak,
@@ -137,7 +182,20 @@ export function useProgress(profileId: string | null) {
         totalQuestions: prev.totalQuestions + total,
       })
 
-      return { levelId, correct, total, score, maxScore, hintsUsed, revealsUsed, stars, durationSec, isNewBest, newBadgeIds }
+      return {
+        levelId,
+        type,
+        correct,
+        total,
+        score,
+        maxScore,
+        hintsUsed,
+        revealsUsed,
+        stars,
+        durationSec,
+        isNewBest,
+        newBadgeIds,
+      }
     },
     [progress],
   )
@@ -146,5 +204,5 @@ export function useProgress(profileId: string | null) {
     setProgress(defaultProgress())
   }, [])
 
-  return { progress, isLevelUnlocked, recordLevelResult, resetProgress }
+  return { progress, isLevelUnlocked, isChallengeUnlocked, recordChallengeResult, resetProgress }
 }
