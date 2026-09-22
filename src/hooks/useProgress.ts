@@ -30,9 +30,9 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-function computeStars(correct: number, total: number): Stars {
-  if (total === 0) return 0
-  const ratio = correct / total
+function computeStars(score: number, maxScore: number): Stars {
+  if (maxScore === 0) return 0
+  const ratio = score / maxScore
   if (ratio >= 0.9) return 3
   if (ratio >= 0.7) return 2
   if (ratio >= 0.5) return 1
@@ -81,9 +81,18 @@ export function useProgress() {
   )
 
   const recordLevelResult = useCallback(
-    (levelId: number, correct: number, total: number, durationSec: number): LevelResult => {
+    (
+      levelId: number,
+      correct: number,
+      total: number,
+      durationSec: number,
+      score: number,
+      hintsUsed: number,
+      revealsUsed: number,
+    ): LevelResult => {
       const prev = progress
-      const stars = computeStars(correct, total)
+      const maxScore = total * 3
+      const stars = computeStars(score, maxScore)
       const newBadgeIds: string[] = []
 
       const prevStars = prev.levelStars[levelId] ?? 0
@@ -94,10 +103,10 @@ export function useProgress() {
         const badgeId = `level-${levelId}`
         if (!prev.unlockedBadges.includes(badgeId)) newBadgeIds.push(badgeId)
       }
-      if (correct === total && total > 0 && !prev.unlockedBadges.includes('perfect')) {
+      if (score === maxScore && total > 0 && !prev.unlockedBadges.includes('perfect')) {
         newBadgeIds.push('perfect')
       }
-      if (stars === 3 && durationSec > 0 && durationSec / total <= 4 && !prev.unlockedBadges.includes('speedy')) {
+      if (stars === 3 && durationSec > 0 && durationSec / total <= 6 && !prev.unlockedBadges.includes('speedy')) {
         newBadgeIds.push('speedy')
       }
       if (
@@ -122,7 +131,7 @@ export function useProgress() {
         totalQuestions: prev.totalQuestions + total,
       })
 
-      return { levelId, correct, total, stars, durationSec, isNewBest, newBadgeIds }
+      return { levelId, correct, total, score, maxScore, hintsUsed, revealsUsed, stars, durationSec, isNewBest, newBadgeIds }
     },
     [progress],
   )

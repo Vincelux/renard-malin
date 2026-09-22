@@ -37,8 +37,15 @@ export function Results({
       <h2 className="text-2xl font-extrabold text-orange-800">{level.name}</h2>
       <StarRating stars={result.stars} size="text-5xl" />
       <p className="text-lg text-orange-700 font-semibold">
-        {result.correct} / {result.total} bonnes réponses
+        {result.correct} / {result.total} bonnes réponses · {result.score} / {result.maxScore} points
       </p>
+      {(result.hintsUsed > 0 || result.revealsUsed > 0) && (
+        <p className="text-sm text-orange-500">
+          {result.hintsUsed > 0 && `💡 ${result.hintsUsed} astuce(s) utilisée(s)`}
+          {result.hintsUsed > 0 && result.revealsUsed > 0 && ' · '}
+          {result.revealsUsed > 0 && `👀 ${result.revealsUsed} réponse(s) montrée(s)`}
+        </p>
+      )}
       <p className="text-orange-600">{encouragement}</p>
 
       {result.newBadgeIds.length > 0 && (

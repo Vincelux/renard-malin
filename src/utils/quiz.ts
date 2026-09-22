@@ -4,43 +4,6 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const copy = [...arr]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = randInt(0, i)
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
-
-function buildChoices(a: number, b: number, answer: number): number[] {
-  const distractors = new Set<number>()
-  const candidates = [
-    a * (b + 1),
-    a * (b - 1),
-    (a + 1) * b,
-    (a - 1) * b,
-    answer + a,
-    answer - a,
-    answer + b,
-    answer - b,
-    answer + randInt(1, 10),
-    answer - randInt(1, 10),
-  ].filter((n) => n > 0 && n !== answer)
-
-  for (const c of shuffle(candidates)) {
-    if (distractors.size >= 3) break
-    distractors.add(c)
-  }
-  // Fallback in the unlikely case we didn't find 3 distinct distractors.
-  while (distractors.size < 3) {
-    const fallback = answer + randInt(-15, 15)
-    if (fallback > 0 && fallback !== answer) distractors.add(fallback)
-  }
-
-  return shuffle([answer, ...Array.from(distractors)])
-}
-
 export function generateQuestions(tables: number[], count: number): Question[] {
   const questions: Question[] = []
   const seen = new Set<string>()
@@ -52,9 +15,29 @@ export function generateQuestions(tables: number[], count: number): Question[] {
     if (seen.has(key) && seen.size < tables.length * 10) continue
     seen.add(key)
 
-    const answer = a * b
-    questions.push({ a, b, answer, choices: buildChoices(a, b, answer) })
+    questions.push({ a, b, answer: a * b })
   }
 
   return questions
+}
+
+const SPECIAL_TRICKS: Record<number, (other: number) => string> = {
+  1: (other) => `Multiplier par 1 ne change rien : la réponse est ${other}.`,
+  2: (other) => `Multiplier par 2, c'est additionner le nombre avec lui-même : ${other} + ${other}.`,
+  4: (other) => `Multiplier par 4, c'est doubler deux fois de suite : d'abord ${other} + ${other}, puis redouble ce résultat.`,
+  5: () => `Pour multiplier par 5 : multiplie par 10, puis divise le résultat par 2.`,
+  9: (other) => `Pour multiplier par 9 : multiplie par 10, puis retire ${other}.`,
+  10: () => `Pour multiplier par 10 : ajoute simplement un 0 à la fin du nombre.`,
+  11: (other) => (other <= 9 ? `Pour multiplier 11 par un chiffre de 1 à 9, répète-le deux fois : ${other}${other}.` : `Pense à 11 comme 10 + 1 : additionne le nombre × 10 et le nombre lui-même.`),
+}
+
+export function generateHint(a: number, b: number): string {
+  const candidates = [a, b].filter((n) => n in SPECIAL_TRICKS)
+  if (candidates.length > 0) {
+    const n = Math.min(...candidates)
+    const other = n === a ? b : a
+    return `Astuce : ${SPECIAL_TRICKS[n](other)}`
+  }
+
+  return `Astuce : décompose le calcul. ${a} × ${b} = (${a} × ${b - 1}) + ${a}. Calcule d'abord ${a} × ${b - 1}, puis ajoute ${a}.`
 }

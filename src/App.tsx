@@ -18,9 +18,16 @@ function App() {
     setScreen('quiz')
   }
 
-  function finishQuiz(correct: number, total: number, durationSec: number) {
+  function finishQuiz(
+    correct: number,
+    total: number,
+    durationSec: number,
+    score: number,
+    hintsUsed: number,
+    revealsUsed: number,
+  ) {
     if (selectedLevelId === null) return
-    const result = recordLevelResult(selectedLevelId, correct, total, durationSec)
+    const result = recordLevelResult(selectedLevelId, correct, total, durationSec, score, hintsUsed, revealsUsed)
     setLastResult(result)
     setScreen('results')
   }

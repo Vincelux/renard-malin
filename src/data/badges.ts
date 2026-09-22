@@ -6,7 +6,7 @@ export const BADGES: Badge[] = [
   { id: 'level-3', name: 'Renard Astucieux', description: 'Termine "Le Renard Astucieux"', emoji: '🍁' },
   { id: 'level-4', name: 'Renard Rusé', description: 'Termine "Le Renard Rusé"', emoji: '🌰' },
   { id: 'level-5', name: 'Grand Maître Renard', description: 'Termine "Le Grand Maître Renard"', emoji: '👑' },
-  { id: 'perfect', name: 'Étoile Filante', description: 'Réponds juste à toutes les questions d\'un niveau', emoji: '🌟' },
+  { id: 'perfect', name: 'Étoile Filante', description: 'Trouve toutes les réponses du premier coup, sans aucune aide', emoji: '🌟' },
   { id: 'speedy', name: "Rapide comme l'éclair", description: 'Termine un niveau vite avec un très bon score', emoji: '⚡' },
   { id: 'streak-3', name: 'Petit Explorateur', description: 'Joue 3 jours de suite', emoji: '🔥' },
   { id: 'streak-7', name: 'Grand Explorateur', description: 'Joue 7 jours de suite', emoji: '🏆' },

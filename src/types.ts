@@ -17,7 +17,6 @@ export interface Question {
   a: number
   b: number
   answer: number
-  choices: number[]
 }
 
 export type Stars = 0 | 1 | 2 | 3
@@ -26,6 +25,10 @@ export interface LevelResult {
   levelId: number
   correct: number
   total: number
+  score: number
+  maxScore: number
+  hintsUsed: number
+  revealsUsed: number
   stars: Stars
   durationSec: number
   isNewBest: boolean
