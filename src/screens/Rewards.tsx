@@ -1,7 +1,22 @@
 import { BADGES } from '../data/badges'
 import type { Progress } from '../types'
 
-export function Rewards({ progress, onBack }: { progress: Progress; onBack: () => void }) {
+export function Rewards({
+  progress,
+  onBack,
+  onReset,
+}: {
+  progress: Progress
+  onBack: () => void
+  onReset: () => void
+}) {
+  function handleReset() {
+    const confirmed = window.confirm(
+      'Effacer toute la progression (niveaux, étoiles, récompenses) ? Cette action est irréversible.',
+    )
+    if (confirmed) onReset()
+  }
+
   return (
     <div className="min-h-[80vh] px-4 py-6 max-w-lg mx-auto">
       <button onClick={onBack} className="text-orange-700 font-semibold mb-4">
@@ -29,6 +44,13 @@ export function Rewards({ progress, onBack }: { progress: Progress; onBack: () =
           )
         })}
       </div>
+
+      <button
+        onClick={handleReset}
+        className="mt-8 mx-auto block text-sm text-stone-400 hover:text-red-500 transition underline"
+      >
+        Réinitialiser toute la progression
+      </button>
     </div>
   )
 }

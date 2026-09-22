@@ -8,7 +8,7 @@ import { useProgress } from './hooks/useProgress'
 import type { LevelResult, Screen } from './types'
 
 function App() {
-  const { progress, isLevelUnlocked, recordLevelResult } = useProgress()
+  const { progress, isLevelUnlocked, recordLevelResult, resetProgress } = useProgress()
   const [screen, setScreen] = useState<Screen>('home')
   const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null)
   const [lastResult, setLastResult] = useState<LevelResult | null>(null)
@@ -64,7 +64,16 @@ function App() {
         />
       )}
 
-      {screen === 'rewards' && <Rewards progress={progress} onBack={() => setScreen('home')} />}
+      {screen === 'rewards' && (
+        <Rewards
+          progress={progress}
+          onBack={() => setScreen('home')}
+          onReset={() => {
+            resetProgress()
+            setScreen('home')
+          }}
+        />
+      )}
     </div>
   )
 }
