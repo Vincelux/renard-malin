@@ -44,4 +44,10 @@ export interface Progress {
   totalQuestions: number
 }
 
-export type Screen = 'home' | 'levels' | 'quiz' | 'results' | 'rewards'
+export interface Profile {
+  id: string
+  name: string
+  emoji: string
+}
+
+export type Screen = 'profiles' | 'home' | 'levels' | 'quiz' | 'results' | 'rewards'

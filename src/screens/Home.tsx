@@ -1,26 +1,39 @@
 import { FoxMascot } from '../components/FoxMascot'
-import type { Progress } from '../types'
+import type { Profile, Progress } from '../types'
 import { LEVELS } from '../data/levels'
 
 export function Home({
+  profile,
   progress,
   onPlay,
   onRewards,
+  onSwitchProfile,
 }: {
+  profile: Profile
   progress: Progress
   onPlay: () => void
   onRewards: () => void
+  onSwitchProfile: () => void
 }) {
   const totalStars = Object.values(progress.levelStars).reduce((sum: number, s) => sum + s, 0)
   const maxStars = LEVELS.length * 3
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-6 gap-6">
+    <div className="relative flex flex-col items-center justify-center min-h-[80vh] text-center px-6 gap-6">
+      <button
+        onClick={onSwitchProfile}
+        className="absolute top-4 right-4 text-sm text-orange-500 hover:text-orange-700 font-semibold"
+      >
+        🔄 Changer de joueur
+      </button>
+
       <FoxMascot mood="happy" />
       <div>
-        <h1 className="text-4xl font-extrabold text-orange-800">Salut Justine !</h1>
+        <h1 className="text-4xl font-extrabold text-orange-800">
+          Salut {profile.emoji} {profile.name} !
+        </h1>
         <p className="mt-2 text-lg text-orange-700">
-          Prête à devenir la reine des tables de multiplication ?
+          Prêt(e) à devenir le roi ou la reine des tables de multiplication ?
         </p>
       </div>
 

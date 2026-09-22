@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { LevelResult, Progress, Stars } from '../types'
 import { LEVELS } from '../data/levels'
 
-const STORAGE_KEY = 'renard-malin-progress-v1'
+const STORAGE_PREFIX = 'renard-malin-progress-v1'
 
 function defaultProgress(): Progress {
   return {
@@ -15,9 +15,10 @@ function defaultProgress(): Progress {
   }
 }
 
-function loadProgress(): Progress {
+function loadProgress(profileId: string | null): Progress {
+  if (!profileId) return defaultProgress()
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}:${profileId}`)
     if (!raw) return defaultProgress()
     const parsed = JSON.parse(raw)
     return { ...defaultProgress(), ...parsed }
@@ -60,16 +61,21 @@ function updateStreak(progress: Progress): { streak: number; newBadgeIds: string
   return { streak, newBadgeIds }
 }
 
-export function useProgress() {
-  const [progress, setProgress] = useState<Progress>(() => loadProgress())
+export function useProgress(profileId: string | null) {
+  const [progress, setProgress] = useState<Progress>(() => loadProgress(profileId))
 
   useEffect(() => {
+    setProgress(loadProgress(profileId))
+  }, [profileId])
+
+  useEffect(() => {
+    if (!profileId) return
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+      localStorage.setItem(`${STORAGE_PREFIX}:${profileId}`, JSON.stringify(progress))
     } catch {
       // Storage unavailable (e.g. private browsing) — progress just won't persist.
     }
-  }, [progress])
+  }, [progress, profileId])
 
   const isLevelUnlocked = useCallback(
     (levelId: number) => {
